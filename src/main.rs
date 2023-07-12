@@ -1,6 +1,7 @@
 mod process;
 mod memory;
 mod files;
+mod queues;
 
 use memory::MemoryManager;
 use process::Process;
