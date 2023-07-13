@@ -27,7 +27,8 @@ fn main() {
 
     // Parse files
     let files_path = &args[2];
-    let (num_blocks, alloc_disk_blocks) = parsers::files_parser::parse(files_path);
+    let (num_blocks, alloc_disk_blocks, operations) = parsers::files_parser::parse(files_path);
+    // println!("operations = {:?}", operations);
 
     // Simulate process
     println!("\n\n Simulating Dispatcher \n");
