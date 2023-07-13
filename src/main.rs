@@ -1,11 +1,14 @@
-mod process;
-mod memory;
 mod files;
+mod memory;
+mod process;
 mod queues;
+mod structures {
+    pub mod segment_list;
+}
 
+use files::FileManager;
 use memory::MemoryManager;
 use process::Process;
-use files::FileManager;
 
 fn main() {
     let mut memory_manager = MemoryManager::new();
