@@ -1,5 +1,6 @@
 use crate::resources::Resource;
 
+#[derive(Debug)]
 pub struct SoftwareContext {
     pub priority: usize,
     pub cpu_time: u32,
@@ -12,12 +13,13 @@ pub struct SoftwareContext {
     pub resources: Vec<Resource>,
 }
 
+#[derive(Debug)]
 struct HardwareContext {
     pc: u32,
     initialization_time: u32,
     memory_blocks: u32,
 }
-
+#[derive(Debug)]
 pub struct Process {
     hardware_context: HardwareContext,
     pub software_context: SoftwareContext,

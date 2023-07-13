@@ -1,5 +1,13 @@
 {
-  "rust-analyzer.linkedProjects": ["./Cargo.toml", "./Cargo.toml"],
+  "rust-analyzer.linkedProjects": [
+    "./Cargo.toml",
+    "./Cargo.toml",
+    "./Cargo.toml",
+    "./Cargo.toml",
+    "./Cargo.toml",
+    "./Cargo.toml",
+    "./Cargo.toml"
+  ],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "rust-lang.rust-analyzer",
   "rust-analyzer.rustfmt.rangeFormatting.enable": true
