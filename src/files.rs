@@ -151,4 +151,48 @@ mod tests {
             assert!(file_manager.delete_file(&real_time_process, 'A').is_ok());
         }
     }
+
+    mod strong_test {
+        use super::*;
+
+        #[test]
+        fn adds_and_deletes() {
+            let mut file_manager = FileManager::new(10, {
+                vec![
+                    (
+                        'X',
+                        Segment {
+                            offset: 0,
+                            length: 2,
+                        },
+                    ),
+                    (
+                        'Y',
+                        Segment {
+                            offset: 3,
+                            length: 1,
+                        },
+                    ),
+                    (
+                        'Z',
+                        Segment {
+                            offset: 5,
+                            length: 3,
+                        },
+                    ),
+                ]
+            });
+            let mut process_vec = vec![create_process_mock(0)];
+            assert!(file_manager.delete_file(&process_vec[0], 'X').is_ok());
+            let result = file_manager.create_file(&mut process_vec[0], 'D', 3);
+            assert_eq!(
+                result,
+                Some(Segment {
+                    offset: 0,
+                    length: 3,
+                })
+            );
+            assert!(process_vec[0].software_context.files_created.contains(&'D'));
+        }
+    }
 }
