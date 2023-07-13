@@ -1,15 +1,13 @@
+use crate::resources::Resource;
+
 pub struct SoftwareContext {
     pub priority: usize,
     pub files_created: Vec<char>,
+    pub resources: Vec<Resource>,
 }
 
 struct HardwareContext {
     pc: u32,
-}
-
-struct AddressSpace {
-    offset: u32,
-    
 }
 
 pub struct Process {
@@ -24,6 +22,7 @@ impl Process {
             software_context: SoftwareContext {
                 priority,
                 files_created: Vec::new(),
+                resources: Vec::new(),
             },
         }
     }
