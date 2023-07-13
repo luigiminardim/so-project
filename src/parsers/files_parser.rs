@@ -5,7 +5,7 @@ pub enum OperationType {
     Create {
         process_id: usize,
         file_name: char,
-        lenght: usize,
+        file_size: usize,
     },
     Erase {
         process_id: usize,
@@ -32,28 +32,28 @@ pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<OperationTyp
         println!("(file = {file_name}, offset = {offset}, length = {length})");
     }
 
-    let mut operations: Vec<OperationType> = Vec::new();
+    let mut sysfile_operations: Vec<OperationType> = Vec::new();
     while let Some(line) = lines.next() {
         let params: Vec<&str> = line.split(", ").collect();
         let process_id = params[0].parse::<usize>().unwrap();
         let operation_code = params[1].parse::<usize>().unwrap();
         let file_name = params[2].chars().next().unwrap();
         if operation_code == 0 {
-            let lenght = params[3].parse::<usize>().unwrap();
-            println!("processso {process_id} cria arquivo {file_name} com {lenght} blocos");
-            operations.push(OperationType::Create {
+            let file_size = params[3].parse::<usize>().unwrap();
+            println!("processso {process_id} cria arquivo {file_name} com {file_size} blocos");
+            sysfile_operations.push(OperationType::Create {
                 process_id,
                 file_name,
-                lenght,
+                file_size,
             });
         } else {
             println!("processso {process_id} deleta arquivo {file_name}");
-            operations.push(OperationType::Erase {
+            sysfile_operations.push(OperationType::Erase {
                 process_id,
                 file_name,
             });
         }
     }
 
-    (num_blocks, alloc_disk_blocks, operations)
+    (num_blocks, alloc_disk_blocks, sysfile_operations)
 }

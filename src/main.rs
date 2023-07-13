@@ -11,6 +11,7 @@ mod parsers {
     pub mod files_parser;
     pub mod processes_parser;
 }
+use parsers::files_parser::OperationType;
 
 mod resources;
 
@@ -19,22 +20,64 @@ mod resources;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    println!("\n\n Parsing Input \n");
+    println!("\n\nParsing Input \n");
     // Parse processes
     let processes_path = &args[1];
-    let processes_table = parsers::processes_parser::parse(processes_path);
+    let mut processes_table = parsers::processes_parser::parse(processes_path);
     // println!("processes_table = {:?}", processes_table);
 
     // Parse files
     let files_path = &args[2];
-    let (num_blocks, alloc_disk_blocks, operations) = parsers::files_parser::parse(files_path);
-    // println!("operations = {:?}", operations);
+    let (num_blocks, alloc_disk_blocks, sysfile_operations) =
+        parsers::files_parser::parse(files_path);
+    // for operation in sysfile_operations {
+    //     println!("operation = {:?}", operation);
+    // }
 
-    // Simulate process
-    println!("\n\n Simulating Dispatcher \n");
-    let memory_manager = memory::MemoryManager::new();
-    let resource_manager = resources::ResourceManager::new();
+    // Simulations
+    println!("\n\nSimulating Dispatcher \n");
+    let mut memory_manager = memory::MemoryManager::new();
+    let mut resource_manager = resources::ResourceManager::new();
 
-    println!("\n\n Simulating File System \n");
-    let file_manager = files::FileManager::new(num_blocks, alloc_disk_blocks);
+    println!("\n\nSimulating File System \n");
+    let mut file_manager = files::FileManager::new(num_blocks, alloc_disk_blocks);
+
+    let mut index = 1;
+    for operation in sysfile_operations {
+        match operation {
+            OperationType::Create {
+                process_id,
+                file_name,
+                file_size,
+            } => {
+                let alloc_segment = file_manager.create_file(
+                    &mut processes_table[process_id],
+                    file_name,
+                    num_blocks,
+                );
+                if alloc_segment.is_some() {
+                    println!("Operação {index} => Sucesso");
+                    println!("  O processo {process_id} criou o arquivo {file_name} com {file_size} blocos");
+                } else {
+                    println!("Operação {index} => Falha");
+                    println!("  O processo {process_id} não pôde criar o arquivo {file_name} com {file_size} blocos");
+                }
+            }
+            OperationType::Erase {
+                process_id,
+                file_name,
+            } => {
+                let result = file_manager.delete_file(&mut processes_table[process_id], file_name);
+                if result.is_ok() {
+                    println!("Operação {index} => Sucesso");
+                    println!("  O processo {process_id} deletou o arquivo {file_name}");
+                } else {
+                    println!("Operação {index} => Falha");
+                    println!("  O processo {process_id} não pôde deletar o arquivo {file_name}");
+                }
+            }
+        }
+        index += 1;
+        println!("\n");
+    }
 }
