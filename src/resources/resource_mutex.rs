@@ -51,7 +51,7 @@ mod tests {
     use super::*;
 
     fn create_process_mock() -> Process {
-        Process::new(1)
+        Process::new(0, 1, 1, 1, 0, false, false, 0)
     }
 
     mod request {

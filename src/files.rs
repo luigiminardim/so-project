@@ -68,7 +68,7 @@ mod tests {
     use super::*;
 
     fn create_process_mock(priority: usize) -> Process {
-        Process::new(priority)
+        Process::new(0, priority, 1, 1, 0, false, false, 0)
     }
 
     mod create_file {
@@ -77,7 +77,7 @@ mod tests {
         #[test]
         fn create_file_success() {
             let mut file_manager = FileManager::new(6, vec![]);
-            let mut process = create_process_mock(0);
+            let mut process: Process = create_process_mock(0);
             let result = file_manager.create_file(&mut process, 'A', 3);
             assert_eq!(
                 result,

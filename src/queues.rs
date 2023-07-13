@@ -79,7 +79,7 @@ mod tests {
     use super::*;
 
     fn create_process_mock(priority: usize) -> Process {
-        Process::new(priority)
+        Process::new(1, priority, 1, 1, 0, false, false, 0)
     }
 
     #[test]
