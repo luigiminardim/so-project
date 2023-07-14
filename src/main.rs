@@ -21,8 +21,6 @@ use crate::resources::ResourceManager;
 mod resources;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    println!("\n\nParsing Input \n");
     let processes_path = "input/processes.txt";
     let files_path = "input/files.txt";
     // Parse processes
@@ -36,7 +34,6 @@ fn main() {
     let mut dispatcher = Dispatcher::new(processes_definitions, disk_operation_definitions);
     let mut process_manager = ProcessManager::new();
     let mut resource_manager = ResourceManager::new();
-
     let mut timestamp = 0;
     while dispatcher.has_more_processes(timestamp) || process_manager.has_more_processes() {
         let new_processes = dispatcher.generate_new_processes(&mut memory_manager, timestamp);
@@ -45,7 +42,12 @@ fn main() {
         }
         if let Some(current_process) = process_manager.get_current_process() {
             match current_process.on_tick() {
-                Interruption::None => {}
+                Interruption::None => {
+                    println!(
+                        "Process {} CPU instruction\n",
+                        current_process.software_context.id,
+                    )
+                }
                 Interruption::Terminate => {
                     let teminated_process = process_manager.terminate_current_process();
                     if let Some(mut terminated_process) = teminated_process {
@@ -78,9 +80,11 @@ fn main() {
                                     file_name,
                                     num_blocks,
                                 );
+                                process_manager.add_process(blocked_process, timestamp);
                             }
                             DiskOperation::Delete { file_name } => {
                                 let _ = file_manager.delete_file(&mut blocked_process, file_name);
+                                process_manager.add_process(blocked_process, timestamp);
                             }
                         }
                     }

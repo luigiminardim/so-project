@@ -16,6 +16,7 @@ pub enum Interruption {
 
 #[derive(Debug)]
 pub struct SoftwareContext {
+    pub id: usize,
     pub priority: usize,
     pub files_created: Vec<char>,
     pub resources: Vec<Resource>,
@@ -37,6 +38,7 @@ pub struct Process {
 
 impl Process {
     pub fn new(
+        id: usize,
         priority: usize,
         cpu_time: usize,
         use_printer: bool,
@@ -56,6 +58,7 @@ impl Process {
         Process {
             hardware_context: HardwareContext { pc: 0 },
             software_context: SoftwareContext {
+                id,
                 priority,
                 cpu_time,
                 instructions,
@@ -103,7 +106,9 @@ impl Process {
     }
 
     pub fn on_tick(&mut self) -> Interruption {
-        if self.hardware_context.pc >= self.software_context.cpu_time {
+        if self.hardware_context.pc
+            >= self.software_context.cpu_time + self.software_context.instructions.len()
+        {
             return Interruption::Terminate;
         }
         let interruption = self
@@ -111,9 +116,22 @@ impl Process {
             .instructions
             .get(self.hardware_context.pc)
             .unwrap_or(&Interruption::None);
-        if let Interruption::None = interruption {
-            self.hardware_context.pc += 1;
-        }
+        self.hardware_context.pc += 1;
         interruption.clone()
+    }
+
+    pub fn println(&self) {
+        println!(
+            "Process {{ pid: {}, offset: {}, blocks: {}, priority: {}, time: {}, instructions: {:?} }}\n",
+            self.software_context.id,
+            self.address_space.offset,
+            self.address_space.length,
+            self.software_context.priority,
+            self.software_context.cpu_time,
+            self.software_context.instructions.iter().filter_map(|instruction| match instruction {
+                Interruption::AllocResource { resource } => Some(resource),
+                _ => None,
+            }).collect::<Vec<_>>(),
+        )
     }
 }

@@ -29,7 +29,13 @@ impl Dispatcher {
         for process_definition in self.processes_definitions.iter() {
             if process_definition.init_time == timestamp {
                 if let Some(process) = self.build_process(process_definition, &mut memory_manager) {
+                    process.println();
                     new_processes.push(process);
+                } else {
+                    println!(
+                        "Process {} could not be created due to lack of memory\n",
+                        process_definition.id
+                    );
                 }
             }
         }
@@ -69,6 +75,7 @@ impl Dispatcher {
             process_definition.num_memory_blocks,
         )?;
         let new_process = Process::new(
+            process_definition.id,
             process_definition.priority,
             process_definition.cpu_time,
             process_definition.use_printer,

@@ -54,6 +54,7 @@ mod tests {
 
     fn create_process_mock() -> Process {
         Process::new(
+            0,
             1,
             0,
             false,

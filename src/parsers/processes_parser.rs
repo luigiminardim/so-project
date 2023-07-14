@@ -21,7 +21,6 @@ pub fn parse(processes_path: &str) -> Vec<ProcessDefinition> {
             .split(", ")
             .map(|x| x.parse::<usize>().unwrap())
             .collect();
-        println!("process = {:?}", params);
         process_definitions.push(ProcessDefinition {
             id,
             init_time: params[0],

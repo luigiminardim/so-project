@@ -16,7 +16,7 @@ impl ProcessManager {
     pub fn new() -> ProcessManager {
         ProcessManager {
             execution: None,
-            queues: (0..3).map(|_| VecDeque::new()).collect(),
+            queues: (0..=3).map(|_| VecDeque::new()).collect(),
         }
     }
 
@@ -51,6 +51,7 @@ impl ProcessManager {
 
     pub fn terminate_current_process(&mut self) -> Option<Process> {
         let process = self.execution.take()?.process;
+        println!("Terminating process {}", process.software_context.id);
         Some(process)
     }
 
@@ -90,6 +91,7 @@ mod tests {
 
     fn create_process_mock(priority: usize) -> Process {
         Process::new(
+            0,
             priority,
             0,
             false,

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::process::Process;
 use crate::structures::segment_list::{Segment, SegmentList};
 
+#[derive(Debug)]
 pub struct FileManager {
     free_segments: SegmentList,
     alloc_map: HashMap<char, Segment>,
@@ -25,10 +26,15 @@ impl FileManager {
             free_segments.alloc_segment(alloc_segment);
         }
         let alloc_map = alloc_disk_blocks.into_iter().collect();
-        FileManager {
+        let file_manager = FileManager {
             free_segments,
             alloc_map,
-        }
+        };
+        println!(
+            "FileManager {{ num_blocks: {num_blocks}, alloc_map: {:?} }}\n",
+            file_manager.alloc_map
+        );
+        file_manager
     }
 
     pub fn create_file(
@@ -37,10 +43,21 @@ impl FileManager {
         file_name: char,
         num_blocks: usize,
     ) -> Option<Segment> {
-        let alloc_segment = self.free_segments.alloc(num_blocks)?;
-        self.alloc_map.insert(file_name, alloc_segment.clone());
-        process.software_context.files_created.push(file_name);
-        Some(alloc_segment)
+        if let Some(alloc_segment) = self.free_segments.alloc(num_blocks) {
+            println!(
+                "Process {} created file {} with {} blocks\n",
+                process.software_context.id, file_name, num_blocks
+            );
+            self.alloc_map.insert(file_name, alloc_segment.clone());
+            process.software_context.files_created.push(file_name);
+            Some(alloc_segment)
+        } else {
+            println!(
+                "Process {} could not create file {} with {} blocks\n",
+                process.software_context.id, file_name, num_blocks
+            );
+            None
+        }
     }
 
     pub fn delete_file(
@@ -52,14 +69,33 @@ impl FileManager {
         let process_created_file = process.software_context.files_created.contains(&file_name);
         let is_authorized = is_real_time_process || process_created_file;
         if !is_authorized {
+            println!(
+                "Process {} could not delete file {}\n",
+                process.software_context.id, file_name
+            );
             return Err(DeleteFileError::Unauthorized);
         }
         let disk_segment = self
             .alloc_map
             .remove(&file_name)
-            .ok_or(DeleteFileError::NotFound)?;
-        self.free_segments.free(disk_segment);
-        Ok(())
+            .ok_or(DeleteFileError::NotFound);
+        match disk_segment {
+            Ok(disk_segment) => {
+                println!(
+                    "Process {} deleted file {}\n",
+                    process.software_context.id, file_name
+                );
+                self.free_segments.free(disk_segment);
+                return Ok(());
+            }
+            Err(_) => {
+                println!(
+                    "Process {} could not find file {} to delete\n",
+                    process.software_context.id, file_name
+                );
+                return Err(DeleteFileError::NotFound);
+            }
+        }
     }
 }
 
@@ -69,6 +105,7 @@ mod tests {
 
     fn create_process_mock(priority: usize) -> Process {
         Process::new(
+            0,
             priority,
             0,
             false,
