@@ -21,8 +21,15 @@ use crate::resources::ResourceManager;
 mod resources;
 
 fn main() {
-    let processes_path = "input/processes.txt";
-    let files_path = "input/files.txt";
+    let argv = std::env::args().collect::<Vec<String>>();
+    let (default_processes_path, default_files_path) = (
+        String::from("input/processes.txt"),
+        String::from("input/files.txt"),
+    );
+    let processes_path = argv.get(1).unwrap_or(&default_processes_path);
+    let files_path = argv.get(2).unwrap_or(&default_files_path);
+    println!("Processes path: {}", processes_path);
+    println!("Files path: {}", files_path);
     // Parse processes
     let processes_definitions = parsers::processes_parser::parse(processes_path);
     // Parse files
