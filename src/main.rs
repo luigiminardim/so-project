@@ -15,14 +15,12 @@ use parsers::files_parser::OperationType;
 
 mod resources;
 
-// cargo run -- input/processes.txt input/files.txt
-
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     println!("\n\nParsing Input \n");
     let processes_path = "input/processes.txt";
-    let files_path = "input/files.txt";
+    let files_path = "input/files2.txt";
 
     // Parse processes
     let mut processes_table = parsers::processes_parser::parse(processes_path);
@@ -52,7 +50,6 @@ fn main() {
                     file_name,
                     num_blocks,
                 );
-                println!("alloc_segment = {:?}", alloc_segment);
                 if alloc_segment.is_some() {
                     println!("Operação {index} => Sucesso");
                     println!("  O processo {process_id} criou o arquivo {file_name} com {file_size} blocos");
