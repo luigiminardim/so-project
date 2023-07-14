@@ -82,8 +82,6 @@ mod tests {
     }
 
     mod free {
-        use crate::memory;
-
         use super::*;
 
         #[test]

@@ -10,7 +10,7 @@ pub enum DiskOperation {
 pub enum Interruption {
     None,
     AllocResource { resource: Resource },
-    DiskInstruction { instruction: DiskOperation },
+    DiskInterruption { instruction: DiskOperation },
     Terminate,
 }
 
@@ -92,7 +92,7 @@ impl Process {
             });
         }
         for disk_operation in disk_operations {
-            instructions.push(Interruption::DiskInstruction {
+            instructions.push(Interruption::DiskInterruption {
                 instruction: disk_operation,
             });
         }

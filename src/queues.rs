@@ -50,9 +50,8 @@ impl ProcessManager {
         Some(process)
     }
 
-    pub fn terminate_current_process(&mut self, timestamp: usize) {
-        self.execution.take();
-        self.fill_executing_context(timestamp);
+    pub fn terminate_current_process(&mut self, timestamp: usize) -> Option<Process> {
+        self.block_current_process(timestamp)
     }
 
     pub fn on_tick(&mut self, timestamp: usize) {
