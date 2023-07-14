@@ -37,9 +37,8 @@ fn main() {
     println!("\n\nSimulating File System \n");
     let mut file_manager = files::FileManager::new(num_blocks, alloc_disk_blocks);
 
-    let mut index = 1;
-    for operation in sysfile_operations {
-        match operation {
+    for (index, operation) in sysfile_operations.iter().enumerate() {
+        match *operation {
             OperationType::Create {
                 process_id,
                 file_name,
@@ -72,7 +71,6 @@ fn main() {
                 }
             }
         }
-        index += 1;
         println!("\n");
     }
 }
