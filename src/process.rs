@@ -1,4 +1,4 @@
-use crate::resources::Resource;
+use crate::{resources::Resource, structures::segment_list::Segment};
 
 #[derive(Debug, Clone)]
 pub enum DiskOperation {
@@ -32,6 +32,7 @@ struct HardwareContext {
 pub struct Process {
     hardware_context: HardwareContext,
     pub software_context: SoftwareContext,
+    pub address_space: Segment,
 }
 
 impl Process {
@@ -43,6 +44,7 @@ impl Process {
         use_modem: bool,
         use_sata: bool,
         disk_operations: Vec<DiskOperation>,
+        address_space: Segment,
     ) -> Process {
         let instructions = Process::build_instructions(
             use_printer,
@@ -60,6 +62,7 @@ impl Process {
                 files_created: Vec::new(),
                 resources: Vec::new(),
             },
+            address_space,
         }
     }
 
@@ -100,7 +103,7 @@ impl Process {
     }
 
     pub fn on_tick(&mut self) -> Interruption {
-        if self.hardware_context.pc >= self.software_context.instructions.len() {
+        if self.hardware_context.pc >= self.software_context.cpu_time {
             return Interruption::Terminate;
         }
         let interruption = self
@@ -108,7 +111,9 @@ impl Process {
             .instructions
             .get(self.hardware_context.pc)
             .unwrap_or(&Interruption::None);
-        self.hardware_context.pc += 1;
+        if let Interruption::None = interruption {
+            self.hardware_context.pc += 1;
+        }
         interruption.clone()
     }
 }

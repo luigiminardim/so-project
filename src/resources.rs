@@ -64,10 +64,24 @@ impl ResourceManager {
 
 #[cfg(test)]
 mod tests {
+    use crate::structures::segment_list::Segment;
+
     use super::*;
 
     fn create_process_mock() -> Process {
-        Process::new(1, 0, false, false, false, false, vec![])
+        Process::new(
+            1,
+            0,
+            false,
+            false,
+            false,
+            false,
+            vec![],
+            Segment {
+                offset: 0,
+                length: 0,
+            },
+        )
     }
 
     mod request {

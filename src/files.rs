@@ -68,7 +68,19 @@ mod tests {
     use super::*;
 
     fn create_process_mock(priority: usize) -> Process {
-        Process::new(priority, 0, false, false, false, false, vec![])
+        Process::new(
+            priority,
+            0,
+            false,
+            false,
+            false,
+            false,
+            vec![],
+            Segment {
+                offset: 0,
+                length: 0,
+            },
+        )
     }
 
     mod create_file {

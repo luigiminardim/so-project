@@ -1,4 +1,5 @@
 use crate::{
+    memory::MemoryManager,
     parsers::{files_parser::DiskOperationDefinition, processes_parser::ProcessDefinition},
     process::{DiskOperation, Process},
 };
@@ -19,18 +20,27 @@ impl Dispatcher {
         }
     }
 
-    pub fn generate_new_processes(&mut self, timestamp: usize) -> Vec<Process> {
+    pub fn generate_new_processes(
+        &mut self,
+        mut memory_manager: &mut MemoryManager,
+        timestamp: usize,
+    ) -> Vec<Process> {
         let mut new_processes = Vec::new();
         for process_definition in self.processes_definitions.iter() {
             if process_definition.init_time == timestamp {
-                let process = self.build_process(process_definition);
-                new_processes.push(process);
+                if let Some(process) = self.build_process(process_definition, &mut memory_manager) {
+                    new_processes.push(process);
+                }
             }
         }
         new_processes
     }
 
-    fn build_process(&self, process_definition: &ProcessDefinition) -> Process {
+    fn build_process(
+        &self,
+        process_definition: &ProcessDefinition,
+        memory_manager: &mut MemoryManager,
+    ) -> Option<Process> {
         let process_disk_ops = self
             .disk_operation_definitions
             .iter()
@@ -54,8 +64,11 @@ impl Dispatcher {
                 },
             )
             .collect();
-
-        Process::new(
+        let address_space = memory_manager.alloc(
+            process_definition.priority,
+            process_definition.num_memory_blocks,
+        )?;
+        let new_process = Process::new(
             process_definition.priority,
             process_definition.cpu_time,
             process_definition.use_printer,
@@ -63,6 +76,14 @@ impl Dispatcher {
             process_definition.use_modem,
             process_definition.use_sata,
             process_disk_ops,
-        )
+            address_space,
+        );
+        Some(new_process)
+    }
+
+    pub fn has_more_processes(&self, timestamp: usize) -> bool {
+        self.processes_definitions
+            .iter()
+            .any(|process_definition| process_definition.init_time >= timestamp)
     }
 }

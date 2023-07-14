@@ -1,5 +1,3 @@
-use std::{string, vec};
-
 mod files;
 mod memory;
 mod process;
@@ -26,7 +24,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     println!("\n\nParsing Input \n");
     let processes_path = "input/processes.txt";
-    let files_path = "input/files2.txt";
+    let files_path = "input/files.txt";
     // Parse processes
     let processes_definitions = parsers::processes_parser::parse(processes_path);
     // Parse files
@@ -40,8 +38,8 @@ fn main() {
     let mut resource_manager = ResourceManager::new();
 
     let mut timestamp = 0;
-    while true {
-        let new_processes = dispatcher.generate_new_processes(timestamp);
+    while dispatcher.has_more_processes(timestamp) || process_manager.has_more_processes() {
+        let new_processes = dispatcher.generate_new_processes(&mut memory_manager, timestamp);
         for process in new_processes {
             process_manager.add_process(process, timestamp);
         }
@@ -49,18 +47,18 @@ fn main() {
             match current_process.on_tick() {
                 Interruption::None => {}
                 Interruption::Terminate => {
-                    let teminated_process = process_manager.terminate_current_process(timestamp);
+                    let teminated_process = process_manager.terminate_current_process();
                     if let Some(mut terminated_process) = teminated_process {
                         let unblocked_processes =
                             resource_manager.release_resources(&mut terminated_process);
                         for unblocked_process in unblocked_processes {
                             process_manager.add_process(unblocked_process, timestamp);
                         }
+                        memory_manager.free(terminated_process.address_space);
                     }
                 }
                 Interruption::AllocResource { resource } => {
-                    if let Some(blocked_process) = process_manager.block_current_process(timestamp)
-                    {
+                    if let Some(blocked_process) = process_manager.block_current_process() {
                         if let Some(unblocked_process) =
                             resource_manager.request(blocked_process, resource)
                         {
@@ -69,9 +67,7 @@ fn main() {
                     }
                 }
                 Interruption::DiskInterruption { instruction } => {
-                    if let Some(mut blocked_process) =
-                        process_manager.block_current_process(timestamp)
-                    {
+                    if let Some(mut blocked_process) = process_manager.block_current_process() {
                         match instruction {
                             DiskOperation::Create {
                                 file_name,
@@ -92,5 +88,6 @@ fn main() {
             }
         }
         timestamp += 1;
+        process_manager.on_tick(timestamp);
     }
 }

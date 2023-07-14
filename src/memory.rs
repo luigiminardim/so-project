@@ -24,7 +24,7 @@ impl MemoryManager {
         }
     }
 
-    pub fn alloc(&mut self, process_priority: u8, size: usize) -> Option<Segment> {
+    pub fn alloc(&mut self, process_priority: usize, size: usize) -> Option<Segment> {
         match process_priority {
             0 => self.real_time_partition.alloc(size),
             _ => self.user_partition.alloc(size),
