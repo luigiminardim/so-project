@@ -50,6 +50,11 @@ impl ProcessManager {
         Some(process)
     }
 
+    pub fn terminate_current_process(&mut self, timestamp: usize) {
+        self.execution.take();
+        self.fill_executing_context(timestamp);
+    }
+
     pub fn on_tick(&mut self, timestamp: usize) {
         const USER_PROCESS_QUANTUM: usize = 1;
         let should_change_context = match self.execution.as_ref() {
@@ -79,7 +84,7 @@ mod tests {
     use super::*;
 
     fn create_process_mock(priority: usize) -> Process {
-        Process::new(1, priority, 1, 1, 0, false, false, 0)
+        Process::new(priority, 0, false, false, false, false, vec![])
     }
 
     #[test]

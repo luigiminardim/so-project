@@ -1,7 +1,7 @@
 use crate::structures::segment_list::Segment;
 
 #[derive(Debug)]
-pub enum OperationType {
+pub enum DiskOperationDefinition {
     Create {
         process_id: usize,
         file_name: char,
@@ -13,7 +13,7 @@ pub enum OperationType {
     },
 }
 
-pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<OperationType>) {
+pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<DiskOperationDefinition>) {
     let file_string = std::fs::read_to_string(files_path).unwrap();
     let mut lines = file_string.lines();
 
@@ -32,7 +32,7 @@ pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<OperationTyp
         println!("(file = {file_name}, offset = {offset}, length = {length})");
     }
 
-    let mut sysfile_operations: Vec<OperationType> = Vec::new();
+    let mut sysfile_operations: Vec<DiskOperationDefinition> = Vec::new();
     while let Some(line) = lines.next() {
         let params: Vec<&str> = line.split(", ").collect();
         let process_id = params[0].parse::<usize>().unwrap();
@@ -41,14 +41,14 @@ pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<OperationTyp
         if operation_code == 0 {
             let file_size = params[3].parse::<usize>().unwrap();
             println!("processso {process_id} cria arquivo {file_name} com {file_size} blocos");
-            sysfile_operations.push(OperationType::Create {
+            sysfile_operations.push(DiskOperationDefinition::Create {
                 process_id,
                 file_name,
                 file_size,
             });
         } else {
             println!("processso {process_id} deleta arquivo {file_name}");
-            sysfile_operations.push(OperationType::Erase {
+            sysfile_operations.push(DiskOperationDefinition::Erase {
                 process_id,
                 file_name,
             });

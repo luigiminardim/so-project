@@ -1,24 +1,38 @@
-use crate::process::Process;
+pub struct ProcessDefinition {
+    pub id: usize,
+    pub init_time: usize,
+    pub priority: usize,
+    pub cpu_time: usize,
+    pub num_memory_blocks: usize,
+    pub use_printer: bool,
+    pub use_scanner: bool,
+    pub use_modem: bool,
+    pub use_sata: bool,
+}
 
-pub fn parse(processes_path: &str) -> Vec<Process> {
-    let mut processes_table: Vec<Process> = Vec::new();
-    for line in std::fs::read_to_string(processes_path).unwrap().lines() {
-        let params: Vec<u32> = line
+pub fn parse(processes_path: &str) -> Vec<ProcessDefinition> {
+    let mut process_definitions = Vec::new();
+    for (id, line) in std::fs::read_to_string(processes_path)
+        .unwrap()
+        .lines()
+        .enumerate()
+    {
+        let params: Vec<usize> = line
             .split(", ")
-            .map(|x| x.parse::<u32>().unwrap())
+            .map(|x| x.parse::<usize>().unwrap())
             .collect();
         println!("process = {:?}", params);
-        let new_process = Process::new(
-            params[0],
-            params[1] as usize,
-            params[2],
-            params[3],
-            params[4],
-            params[5] != 0,
-            params[6] != 0,
-            params[7],
-        );
-        processes_table.push(new_process);
+        process_definitions.push(ProcessDefinition {
+            id,
+            init_time: params[0],
+            priority: params[1],
+            cpu_time: params[2],
+            num_memory_blocks: params[3],
+            use_printer: params[4] != 0,
+            use_scanner: params[5] != 0,
+            use_modem: params[6] != 0,
+            use_sata: params[7] != 0,
+        });
     }
-    processes_table
+    process_definitions
 }

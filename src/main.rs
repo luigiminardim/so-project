@@ -11,66 +11,60 @@ mod parsers {
     pub mod files_parser;
     pub mod processes_parser;
 }
-use parsers::files_parser::OperationType;
+mod dispatcher;
+
+use crate::dispatcher::Dispatcher;
+use crate::process::Interruption;
+use crate::queues::ProcessManager;
+use crate::resources::ResourceManager;
 
 mod resources;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-
     println!("\n\nParsing Input \n");
     let processes_path = "input/processes.txt";
     let files_path = "input/files2.txt";
-
     // Parse processes
-    let mut processes_table = parsers::processes_parser::parse(processes_path);
-
+    let mut processes_definitions = parsers::processes_parser::parse(processes_path);
     // Parse files
-    let (num_blocks, alloc_disk_blocks, sysfile_operations) =
+    let (num_blocks, alloc_disk_blocks, disk_operation_definitions) =
         parsers::files_parser::parse(files_path);
 
-    // Simulations
-    println!("\n\nSimulating Dispatcher \n");
-    let mut memory_manager = memory::MemoryManager::new();
-    let mut resource_manager = resources::ResourceManager::new();
+    let mut dispatcher = Dispatcher::new(processes_definitions, disk_operation_definitions);
+    let mut process_manager = ProcessManager::new();
+    let mut resource_manager = ResourceManager::new();
 
-    println!("\n\nSimulating File System \n");
-    let mut file_manager = files::FileManager::new(num_blocks, alloc_disk_blocks);
-
-    for (index, operation) in sysfile_operations.iter().enumerate() {
-        match *operation {
-            OperationType::Create {
-                process_id,
-                file_name,
-                file_size,
-            } => {
-                let alloc_segment = file_manager.create_file(
-                    &mut processes_table[process_id],
-                    file_name,
-                    num_blocks,
-                );
-                if alloc_segment.is_some() {
-                    println!("Operação {index} => Sucesso");
-                    println!("  O processo {process_id} criou o arquivo {file_name} com {file_size} blocos");
-                } else {
-                    println!("Operação {index} => Falha");
-                    println!("  O processo {process_id} não pôde criar o arquivo {file_name} com {file_size} blocos");
-                }
-            }
-            OperationType::Erase {
-                process_id,
-                file_name,
-            } => {
-                let result = file_manager.delete_file(&mut processes_table[process_id], file_name);
-                if result.is_ok() {
-                    println!("Operação {index} => Sucesso");
-                    println!("  O processo {process_id} deletou o arquivo {file_name}");
-                } else {
-                    println!("Operação {index} => Falha");
-                    println!("  O processo {process_id} não pôde deletar o arquivo {file_name}");
+    let mut timestamp = 0;
+    while true {
+        let new_processes = dispatcher.generate_new_processes(timestamp);
+        for process in new_processes {
+            process_manager.add_process(process, timestamp);
+        }
+        let mut current_process = process_manager.get_current_process();
+        if let Some(current_process) = current_process
+        match current_process {
+            None => {}
+            Some(process) => {
+                let process_tick_result = process.on_tick();
+                match process_tick_result {
+                    Interruption::None => {}
+                    Interruption::Terminate => {
+                        process_manager.terminate_current_process(timestamp);
+                    }
+                    Interruption::AllocResource { resource } => {
+                        let blocked_process = process_manager.block_current_process(timestamp);
+                        match  {
+                            None => {}
+                            Some(process) => {
+                                resource_manager.request(process, resource);
+                            }
+                        }
+                        resource_manager.request(blocked_process, resource)
+                    }
                 }
             }
         }
-        println!("\n");
+        timestamp += 1;
     }
 }
