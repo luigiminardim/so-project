@@ -122,16 +122,20 @@ impl Process {
 
     pub fn println(&self) {
         println!(
-            "Process {{ pid: {}, offset: {}, blocks: {}, priority: {}, time: {}, instructions: {:?} }}\n",
+            "{{ pid: {}, offset: {}, blocks: {}, priority: {}, time: {}, instructions: {:?} }}",
             self.software_context.id,
             self.address_space.offset,
             self.address_space.length,
             self.software_context.priority,
             self.software_context.cpu_time,
-            self.software_context.instructions.iter().filter_map(|instruction| match instruction {
-                Interruption::AllocResource { resource } => Some(resource),
-                _ => None,
-            }).collect::<Vec<_>>(),
+            self.software_context
+                .instructions
+                .iter()
+                .filter_map(|instruction| match instruction {
+                    Interruption::AllocResource { resource } => Some(resource),
+                    _ => None,
+                })
+                .collect::<Vec<_>>(),
         )
     }
 }

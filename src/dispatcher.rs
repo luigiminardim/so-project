@@ -1,5 +1,5 @@
 use crate::{
-    memory::MemoryManager,
+    memory::{AllocMemoryError, MemoryManager},
     parsers::{files_parser::DiskOperationDefinition, processes_parser::ProcessDefinition},
     process::{DiskOperation, Process},
 };
@@ -26,17 +26,33 @@ impl Dispatcher {
         timestamp: usize,
     ) -> Vec<Process> {
         let mut new_processes = Vec::new();
-        for process_definition in self.processes_definitions.iter() {
-            if process_definition.init_time == timestamp {
-                if let Some(process) = self.build_process(process_definition, &mut memory_manager) {
-                    process.println();
-                    new_processes.push(process);
-                } else {
-                    println!(
-                        "Process {} could not be created due to lack of memory\n",
-                        process_definition.id
-                    );
+        let mut index = 0;
+        while index < self.processes_definitions.len() {
+            if self.processes_definitions[index].init_time <= timestamp {
+                match self.build_process(&self.processes_definitions[index], &mut memory_manager) {
+                    Err(AllocMemoryError::Unavailable) => {
+                        println!(
+                            "Unavailable Memory for process {}. Waiting memory for creation\n",
+                            self.processes_definitions[index].id
+                        );
+                        index += 1;
+                    }
+                    Err(AllocMemoryError::Unsupported) => {
+                        println!(
+                            "Unsupported Memory for process {}. Skipping process\n",
+                            self.processes_definitions[index].id
+                        );
+                        self.processes_definitions.remove(index);
+                    }
+                    Ok(process) => {
+                        println!("Created process");
+                        process.println();
+                        new_processes.push(process);
+                        self.processes_definitions.remove(index);
+                    }
                 }
+            } else {
+                index += 1;
             }
         }
         new_processes
@@ -46,7 +62,7 @@ impl Dispatcher {
         &self,
         process_definition: &ProcessDefinition,
         memory_manager: &mut MemoryManager,
-    ) -> Option<Process> {
+    ) -> Result<Process, AllocMemoryError> {
         let process_disk_ops = self
             .disk_operation_definitions
             .iter()
@@ -85,7 +101,7 @@ impl Dispatcher {
             process_disk_ops,
             address_space,
         );
-        Some(new_process)
+        Ok(new_process)
     }
 
     pub fn has_more_processes(&self, timestamp: usize) -> bool {
