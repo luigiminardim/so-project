@@ -49,6 +49,7 @@ impl Process {
         address_space: Segment,
     ) -> Process {
         let instructions = Process::build_instructions(
+            priority,
             use_printer,
             use_scanner,
             use_modem,
@@ -70,6 +71,7 @@ impl Process {
     }
 
     fn build_instructions(
+        priority: usize,
         use_printer: bool,
         use_scanner: bool,
         use_modem: bool,
@@ -77,25 +79,27 @@ impl Process {
         disk_operations: Vec<DiskOperation>,
     ) -> Vec<Interruption> {
         let mut instructions = Vec::new();
-        if use_scanner {
-            instructions.push(Interruption::AllocResource {
-                resource: Resource::Scanner,
-            });
-        }
-        if use_printer {
-            instructions.push(Interruption::AllocResource {
-                resource: Resource::Printer,
-            });
-        }
-        if use_modem {
-            instructions.push(Interruption::AllocResource {
-                resource: Resource::Modem,
-            });
-        }
-        if use_sata {
-            instructions.push(Interruption::AllocResource {
-                resource: Resource::SataDevice,
-            });
+        if priority != 0 {
+            if use_scanner {
+                instructions.push(Interruption::AllocResource {
+                    resource: Resource::Scanner,
+                });
+            }
+            if use_printer {
+                instructions.push(Interruption::AllocResource {
+                    resource: Resource::Printer,
+                });
+            }
+            if use_modem {
+                instructions.push(Interruption::AllocResource {
+                    resource: Resource::Modem,
+                });
+            }
+            if use_sata {
+                instructions.push(Interruption::AllocResource {
+                    resource: Resource::SataDevice,
+                });
+            }
         }
         for disk_operation in disk_operations {
             instructions.push(Interruption::DiskInterruption {
