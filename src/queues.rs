@@ -16,7 +16,7 @@ impl ProcessManager {
     pub fn new() -> ProcessManager {
         ProcessManager {
             execution: None,
-            queues: (0..3).map(|_| VecDeque::new()).collect(),
+            queues: (0..=3).map(|_| VecDeque::new()).collect(),
         }
     }
 
@@ -44,15 +44,15 @@ impl ProcessManager {
         self.fill_executing_context(timestamp);
     }
 
-    pub fn block_current_process(&mut self, timestamp: usize) -> Option<Process> {
+    pub fn block_current_process(&mut self) -> Option<Process> {
         let process = self.execution.take()?.process;
-        self.fill_executing_context(timestamp);
         Some(process)
     }
 
-    pub fn terminate_current_process(&mut self, timestamp: usize) {
-        self.execution.take();
-        self.fill_executing_context(timestamp);
+    pub fn terminate_current_process(&mut self) -> Option<Process> {
+        let process = self.execution.take()?.process;
+        println!("Terminating process {}", process.software_context.id);
+        Some(process)
     }
 
     pub fn on_tick(&mut self, timestamp: usize) {
@@ -72,19 +72,38 @@ impl ProcessManager {
                     process.software_context.priority =
                         std::cmp::min(process.software_context.priority + 1, 3);
                     self.add_process(process, timestamp);
-                    self.fill_executing_context(timestamp);
                 }
             }
+            self.fill_executing_context(timestamp)
         }
+    }
+
+    pub fn has_more_processes(&self) -> bool {
+        self.queues.iter().any(|queue| !queue.is_empty()) || self.execution.is_some()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::structures::segment_list::Segment;
+
     use super::*;
 
     fn create_process_mock(priority: usize) -> Process {
-        Process::new(priority, 0, false, false, false, false, vec![])
+        Process::new(
+            0,
+            priority,
+            0,
+            false,
+            false,
+            false,
+            false,
+            vec![],
+            Segment {
+                offset: 0,
+                length: 0,
+            },
+        )
     }
 
     #[test]
@@ -104,9 +123,11 @@ mod tests {
         let process1 = create_process_mock(1);
         process_manager.add_process(process1, 0);
         assert!(process_manager.get_current_process().is_some());
-        process_manager.block_current_process(0);
+        process_manager.block_current_process();
+        process_manager.on_tick(1);
         assert!(process_manager.get_current_process().is_some());
-        process_manager.block_current_process(0);
+        process_manager.block_current_process();
+        process_manager.on_tick(2);
         assert!(process_manager.get_current_process().is_none());
     }
 
@@ -135,7 +156,8 @@ mod tests {
                 == 0
         );
 
-        let real_time_process = process_manager.block_current_process(1).unwrap();
+        let real_time_process = process_manager.block_current_process().unwrap();
+        process_manager.on_tick(2);
         process_manager.add_process(real_time_process, 1);
         assert_eq!(
             process_manager
@@ -145,7 +167,7 @@ mod tests {
                 .priority,
             1
         );
-        process_manager.on_tick(2);
+        process_manager.on_tick(3);
         assert_eq!(
             process_manager
                 .get_current_process()

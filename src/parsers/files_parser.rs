@@ -19,8 +19,6 @@ pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<DiskOperatio
 
     let num_blocks = lines.next().unwrap().parse::<usize>().unwrap();
     let num_disk_segments = lines.next().unwrap().parse::<usize>().unwrap();
-    println!("num_blocks = {num_blocks}");
-    println!("num_segments = {num_disk_segments}");
 
     let mut alloc_disk_blocks: Vec<(char, Segment)> = Vec::new();
     for _ in 0..num_disk_segments {
@@ -29,7 +27,6 @@ pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<DiskOperatio
         let offset = params[1].parse::<usize>().unwrap();
         let length = params[2].parse::<usize>().unwrap();
         alloc_disk_blocks.push((file_name, Segment { offset, length }));
-        println!("(file = {file_name}, offset = {offset}, length = {length})");
     }
 
     let mut sysfile_operations: Vec<DiskOperationDefinition> = Vec::new();
@@ -40,14 +37,12 @@ pub fn parse(files_path: &str) -> (usize, Vec<(char, Segment)>, Vec<DiskOperatio
         let file_name = params[2].chars().next().unwrap();
         if operation_code == 0 {
             let file_size = params[3].parse::<usize>().unwrap();
-            println!("processso {process_id} cria arquivo {file_name} com {file_size} blocos");
             sysfile_operations.push(DiskOperationDefinition::Create {
                 process_id,
                 file_name,
                 file_size,
             });
         } else {
-            println!("processso {process_id} deleta arquivo {file_name}");
             sysfile_operations.push(DiskOperationDefinition::Erase {
                 process_id,
                 file_name,

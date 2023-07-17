@@ -8,6 +8,12 @@ pub struct MemoryManager {
 const REAL_TIME_PARTITION_SIZE: usize = 64;
 const USER_PARTITION_SIZE: usize = 960;
 
+#[derive(Debug, PartialEq)]
+pub enum AllocMemoryError {
+    Unavailable,
+    Unsupported,
+}
+
 impl MemoryManager {
     pub fn new() -> Self {
         let real_time_initial_segment = Segment {
@@ -24,10 +30,22 @@ impl MemoryManager {
         }
     }
 
-    pub fn alloc(&mut self, process_priority: u8, size: usize) -> Option<Segment> {
+    pub fn alloc(
+        &mut self,
+        process_priority: usize,
+        size: usize,
+    ) -> Result<Segment, AllocMemoryError> {
         match process_priority {
-            0 => self.real_time_partition.alloc(size),
-            _ => self.user_partition.alloc(size),
+            0 => match self.real_time_partition.alloc(size) {
+                None if size > REAL_TIME_PARTITION_SIZE => Err(AllocMemoryError::Unsupported),
+                None => Err(AllocMemoryError::Unavailable),
+                Some(segment) => Ok(segment),
+            },
+            _ => match self.user_partition.alloc(size) {
+                None if size > USER_PARTITION_SIZE => Err(AllocMemoryError::Unsupported),
+                None => Err(AllocMemoryError::Unavailable),
+                Some(segment) => Ok(segment),
+            },
         }
     }
 
@@ -53,7 +71,7 @@ mod tests {
             let alloc_segment = memory_manager.alloc(0, 10);
             assert_eq!(
                 alloc_segment,
-                Some(Segment {
+                Ok(Segment {
                     offset: 0,
                     length: 10
                 })
@@ -66,7 +84,7 @@ mod tests {
             let alloc_segment = memory_manager.alloc(1, 10);
             assert_eq!(
                 alloc_segment,
-                Some(Segment {
+                Ok(Segment {
                     offset: 64,
                     length: 10
                 })
@@ -77,13 +95,11 @@ mod tests {
         fn real_time_process_dont_access_user_partition() {
             let mut memory_manager = MemoryManager::new();
             let alloc_segment = memory_manager.alloc(0, 65);
-            assert_eq!(alloc_segment, None);
+            assert_eq!(alloc_segment, Err(AllocMemoryError::Unsupported));
         }
     }
 
     mod free {
-        use crate::memory;
-
         use super::*;
 
         #[test]
@@ -92,7 +108,7 @@ mod tests {
             let alloc_segment = memory_manager.alloc(0, 10);
             assert_eq!(
                 alloc_segment,
-                Some(Segment {
+                Ok(Segment {
                     offset: 0,
                     length: 10
                 })
@@ -101,7 +117,7 @@ mod tests {
             let alloc_segment = memory_manager.alloc(0, 10);
             assert_eq!(
                 alloc_segment,
-                Some(Segment {
+                Ok(Segment {
                     offset: 0,
                     length: 10
                 })
@@ -114,7 +130,7 @@ mod tests {
             let alloc_segment = memory_manager.alloc(1, 10);
             assert_eq!(
                 alloc_segment,
-                Some(Segment {
+                Ok(Segment {
                     offset: 64,
                     length: 10
                 })
@@ -123,7 +139,7 @@ mod tests {
             let alloc_segment = memory_manager.alloc(1, 10);
             assert_eq!(
                 alloc_segment,
-                Some(Segment {
+                Ok(Segment {
                     offset: 64,
                     length: 10
                 })

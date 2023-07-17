@@ -36,10 +36,18 @@ impl ResourceManager {
     }
 
     pub fn request(&mut self, process: Process, resource: Resource) -> Option<Process> {
+        let process_id = process.software_context.id;
         let resource_mutex = &mut self.resource_mutex_vec[resource as usize];
         match resource_mutex.request(process) {
-            None => None,
+            None => {
+                println!(
+                    "Process {} blocked waiting for resource {:?}\n",
+                    process_id, resource
+                );
+                None
+            }
             Some((resource, mut process)) => {
+                println!("Process {} allocated resource {:?}\n", process_id, resource);
                 process.software_context.resources.push(resource);
                 Some(process)
             }
@@ -49,25 +57,46 @@ impl ResourceManager {
     pub fn release_resources(&mut self, process: &mut Process) -> Vec<Process> {
         let mut unblocked_processes = Vec::new();
         for free_resource in process.software_context.resources.iter() {
+            println!(
+                "Process {} releasing resource {:?}",
+                process.software_context.id, free_resource
+            );
             match self.resource_mutex_vec[*free_resource as usize].release(*free_resource) {
                 None => (),
                 Some((resource, mut process)) => {
+                    println!("Process {} unblocked", process.software_context.id);
                     process.software_context.resources.push(resource);
                     unblocked_processes.push(process);
                 }
             }
         }
         process.software_context.resources.clear();
+        println!("");
         unblocked_processes
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::structures::segment_list::Segment;
+
     use super::*;
 
     fn create_process_mock() -> Process {
-        Process::new(1, 0, false, false, false, false, vec![])
+        Process::new(
+            0,
+            1,
+            0,
+            false,
+            false,
+            false,
+            false,
+            vec![],
+            Segment {
+                offset: 0,
+                length: 0,
+            },
+        )
     }
 
     mod request {
