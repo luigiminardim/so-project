@@ -13,6 +13,7 @@ mod dispatcher;
 
 use crate::dispatcher::Dispatcher;
 use crate::files::FileManager;
+
 use crate::memory::MemoryManager;
 use crate::process::{DiskOperation, Interruption};
 use crate::queues::ProcessManager;
@@ -30,6 +31,7 @@ fn main() {
     let files_path = argv.get(2).unwrap_or(&default_files_path);
     println!("Processes path: {}", processes_path);
     println!("Files path: {}", files_path);
+
     // Parse processes
     let processes_definitions = parsers::processes_parser::parse(processes_path);
     // Parse files
@@ -47,6 +49,7 @@ fn main() {
         for process in new_processes {
             process_manager.add_process(process, timestamp);
         }
+
         if let Some(current_process) = process_manager.get_current_process() {
             match current_process.on_tick() {
                 Interruption::None => {
@@ -95,7 +98,7 @@ fn main() {
                             }
                         }
                     }
-                }
+                },
             }
         }
         timestamp += 1;
